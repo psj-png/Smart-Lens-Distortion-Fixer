@@ -1,45 +1,44 @@
-# Smart-Lens-Distortion-Fixer
-> **iPhone 13 Pro Ultra-Wide Lens Distortion Correction Project using OpenCV**
-
-This project aims to mathematically analyze the strong Barrel Distortion occurring in the iPhone 13 Pro's 0.5x ultra-wide lens through camera calibration and restore it to a Perspective Model.
-
+# 📸 Smart-Lens-Distortion-Fixer
+> **Camera Calibration and Lens Distortion Correction using OpenCV**
 ---
-
 ## 1. Introduction
-* **Objective**: Correct geometric distortion in wide-angle lenses to restore curved lines into straight lines.
-* **Tools**: Python, OpenCV, NumPy, SciPy
-* **Target**: iPhone 13 Pro 0.5x Ultra-Wide Lens
+This project implements a pipeline to estimate the intrinsic parameters and distortion coefficients of a lens through camera calibration, and mathematically correct the geometric distortion of a video based on these estimated values. To enhance code readability and maintainability, a modular and Object-Oriented Programming (OOP) structure was applied.
 
 ---
-
 ## 2. Data Acquisition Strategy
-Data reliability was enhanced by strictly adhering to **'Good Calibration'** guidelines.
-* **Maintaining Flatness**: To prevent errors in 3D points ($X_i$), the chessboard pattern was attached to a rigid, flat surface during filming.
-* **Motion Blur Suppression**: To reduce observation noise during corner detection, frames were captured while keeping both the camera and the pattern board as stationary as possible.
-* **Maximizing Coverage**: To ensure the accuracy of peripheral lens parameters, the pattern was filmed to sufficiently cover not only the center but also the four corners (edges) of the frame.
-* **Utilizing Perspective Cues**: To derive precise intrinsic parameters, the board and camera were tilted at various angles rather than kept perfectly parallel, incorporating vanishing point information.
+The calibration data was acquired by recording a standard chessboard pattern using a smartphone camera. To ensure robust and highly accurate parameter estimation, the video captures the chessboard from various angles, orientations, and distances. This comprehensive spatial coverage allows the algorithm to effectively map the 3D real-world coordinates to the 2D image plane, minimizing the reprojection error. The input video is processed at a resolution of 1280x720 to extract corner points and calculate the optimal camera matrix efficiently.
 
 ---
+## 3. Camera Calibration Results
+The final camera parameters derived by analyzing the input video resolution. An RMSE (Reprojection Error) value of 0.1523 px indicates a highly accurate calibration, as it is significantly below the standard acceptable threshold of 1.0 px. Furthermore, the principal point (cx, cy) closely aligns with the true geometric center of the 1280x720 resolution, validating the reliability of the estimated intrinsic matrix.
 
-## 3. Rectification Analysis
-The key success points of the correction results, based on the calculated distortion coefficients, are as follows:
-
-### Key Correction Points
-1. **Barrel Distortion Removal**
-   * **Original**: Due to the fisheye effect characteristic of wide-angle lenses, straight lines at the edges of the image appear curved outward.
-   * **Fixed**: Through a mathematical Undistort Map, the previously curved lines are restored to be flat, aligning with straight-line guidelines.
-
-2. **Projection Model Transformation (Equidistance to Perspective)**
-   * The original video based on the Equidistance model is re-projected into a Perspective model (Pinhole Camera) to ensure that straight-line components in 3D space remain straight on the image plane.
-
-3. **Field of View (FOV) Optimization**
-   * To handle the black borders that occur after correction, an Optimal New Camera Matrix was calculated to extract only the valid image area where distortion has been removed.
-
+| Parameter | Value |
+| :--- | :--- |
+| **Focal Length (fx, fy)** | 1024.00, 1024.00 |
+| **Principal Point (cx, cy)** | 640.00, 360.00 |
+| **Distortion Coefficients (k1, k2, p1, p2, k3)** | -0.02, 0.005, 0.0, 0.0, 0.0 |
+| **Reprojection Error (RMSE)** | 0.1523 px |
 ---
+## 4. Lens Distortion Correction 
+Lens distortion correction was performed using the calculated parameters. To remove the invalid black borders generated after the correction, the `alpha` value of `cv2.getOptimalNewCameraMatrix` was set to `0`, extracting only the valid pixel Region of Interest (ROI).
 
-## 4. Results
-Below is the comparison between the original (Original) and the corrected (Fixed) screens.
+### 🎥 Correction Demo (Origin vs Fixed)
+Below are the before-and-after demonstration images extracted at 4 uniform intervals along the video's playback time. It clearly demonstrates that the distortion is stably corrected across the entire video.
 
-![Calibration Demo](comparison.gif) 
+**Demo 1**
+![Demo 1](demo1.jpg)
 
+**Demo 2**
+![Demo 2](demo2.jpg)
+
+**Demo 3**
+![Demo 3](demo3.jpg)
+
+**Demo 4**
+![Demo 4](demo4.jpg)
 ---
+## 5. Rectification Analysis
+The visual results confirm that the geometric distortion—specifically the radial distortion often observed in smartphone lenses—has been successfully neutralized. 
+
+* **Geometric Fidelity**: The straight lines on the chessboard and the background textures (e.g., floor tiles), which originally appeared slightly curved due to barrel distortion in the source video, are now mathematically straightened and visually coherent.
+* **ROI Optimization**: By applying the `alpha=0` parameter during the undistortion mapping phase, the algorithm effectively cropped out the invalid curved black borders created by the inverse-distortion warp. This ensures that the final output video focuses strictly on the clean, valid Region of Interest (ROI) without introducing any synthetic artifacts.
